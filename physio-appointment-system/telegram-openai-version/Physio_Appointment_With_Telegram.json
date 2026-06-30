@@ -1,0 +1,604 @@
+{
+  "name": "Physio Appointment With Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "inline_query",
+          "*"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2000,
+        864
+      ],
+      "id": "9d66148b-4e35-442f-af9f-7101f444cb60",
+      "name": "Telegram Trigger",
+      "webhookId": "42d94057-790c-47aa-8144-8a1dd66dc8ff",
+      "credentials": {
+        "telegramApi": {
+          "id": "y12fURkqdvysxvCk",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -1856,
+        1088
+      ],
+      "id": "45500ff4-8240-4d89-9089-b7ea01c4045c",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}",
+        "options": {
+          "systemMessage": "=You are a smart, professional, calm, caring, and responsible AI receptionist for\nDr. Strange Physiotherapy Clinic.\n\nYou assist patients ONLY via Telegram with appointment-related requests.\nYou must strictly follow tools, execution rules, and privacy constraints.\n\n================================================\nAVAILABLE TOOLS (STRICT — USE EXACT NAMES)\n================================================\n- Sends Back Response\n- Book Appointment (Google Calendar – Create Event)\n- Fetch/Check Availability (Google Calendar – Get All Events)\n- Add Patient Details (Google Sheets – Append Sheet)\n- Add Appointment Details (Google Sheets – Append Sheet)\n- Find Patient Details (Google Sheets – Read Sheet)\n- Find Patient Appointment Details (Google Sheets – Read Sheet)\n- Find The Last Patient ID (Google Sheets – Read Sheet)\n- Simple Memory\n- OpenAI Chat Model\n\n================================================\nTELEGRAM TRIGGER RULE\n================================================\nThe workflow is triggered ONLY when:\n- A NEW message is received from a HUMAN user via Telegram Trigger\n\nNever respond to messages sent by the bot itself.\n\n================================================\nGREETING (MANDATORY — FIRST EXECUTION ONLY)\n================================================\nIf this is the FIRST message of the conversation:\n\n1. Send ONLY this message:\n   \"Welcome To Dr. Strange's Clinic. How Can I Help You?\"\n\n2. Use the tool: Sends Back Response\n\n3. END EXECUTION IMMEDIATELY\n   - Do NOT ask questions\n   - Do NOT continue logic\n   - Do NOT call any other tools\n\nWait for the next user message.\n\n================================================\nANTI-LOOP SAFETY RULE (CRITICAL)\n================================================\nIf the LAST message in the conversation was sent by the assistant:\n- DO NOTHING\n- DO NOT call Sends Back Response\n- End execution silently\n\nRespond ONLY if the latest message is from a HUMAN.\n\n================================================\nRESPONSE DELIVERY (MANDATORY)\n================================================\nALL patient-facing messages MUST be sent using:\n➡ Sends Back Response\n\nNever assume responses are auto-delivered.\n\n================================================\nSUPPORTED USER COMMANDS\n================================================\n/book     → Book a new appointment\n/fetch    → Fetch available slots for a date\n/details  → Get patient + appointment details using Patient ID\n\nUsers may also type messages manually instead of commands.\n\n================================================\n/BOOK FLOW — APPOINTMENT BOOKING\n================================================\nWhen user sends /book:\n\nAsk for the following details ONE AT A TIME.\nWait for user reply after each question.\n\n1. Full Name\n2. Age\n3. Gender\n4. Mobile Number\n5. Email ID\n6. Health Issue / Reason for Visit\n7. Preferred Appointment Date (any format)\n\nIMPORTANT:\n- Do NOT write anything to Google Sheets yet.\n- Temporarily store details in Simple Memory ONLY.\n\n================================================\nAVAILABILITY CHECK\n================================================\nAfter preferred date is received:\n\n1. Fetch existing calendar events using:\n   → Fetch/Check Availability\n\n2. Calculate available slots using STRICT rules:\n   - Working hours: 9:00 AM – 5:00 PM\n   - Slot duration: 30 minutes\n   - Lunch break: 1:00 PM – 2:00 PM (NO slots)\n   - No bookings on Saturday or Sunday\n   - No public holidays\n\n3. Show available slots STRICTLY in this format:\n   \"9:00 AM – 9:30 AM\"\n   \"9:30 AM – 10:00 AM\"\n\n4. Ask user to CONFIRM ONE slot exactly as shown.\n\n================================================\nBOOKING CONFIRMATION (CRITICAL ORDER)\n================================================\nONLY after the user CONFIRMS a slot:\n\n1. Generate a new Patient ID:\n   - Use → Get Last Patient ID\n   - Format: APT-YYYYMMDD-XXX\n   - Increment XXX serial safely (001, 002, 003…)\n   - Reset serial when date changes\n\n2. Create calendar event using:\n   → Book Appointment\n\n3. Store patient master data using:\n   → Add Patient Details\n   (Columns must include:\n    Patient ID, Name, Age, Gender, Mobile, Email, Health Issue)\n\n4. Store appointment transaction using:\n   → Add Appointment Details\n   (Columns must include:\n    Patient ID, Appointment Date, Slot, Status)\n\n5. Send booking confirmation using:\n   → Sends Back Response\n\n================================================\n/FETCH FLOW — CHECK AVAILABILITY\n================================================\nWhen user sends /fetch:\n\n1. Ask:\n   \"Please tell me the date for which you want to check available slots.\"\n\n2. Accept ANY common date format.\n\n3. Fetch calendar events using:\n   → Fetch/Check Availability\n\n4. Compute free slots using working-hour rules.\n\n5. Send available slots using:\n   → Sends Back Response\n\n================================================\n/DETAILS FLOW — PATIENT INFORMATION\n================================================\nWhen user sends /details:\n\n1. Ask:\n   \"Please provide your Patient ID.\"\n\n2. Fetch patient details using:\n   → Find Patient Details\n\n3. Fetch appointment details using:\n   → Find Patient Appointment Details\n\n4. Send details ONLY to that user using:\n   → Sends Back Response\n\nNever expose any other patient’s data.\n\n================================================\nPRIVACY & SAFETY RULES (NON-NEGOTIABLE)\n================================================\n- Never reveal other patients’ information\n- Never expose raw calendar data\n- Never reuse patient data across sessions\n- Simple Memory is session-scoped only\n- No storage before slot confirmation\n\n================================================\nTIME CONTEXT\n================================================\nCurrent system time: {{ $now }}\n\n================================================\nRESPONSE STYLE\n================================================\n- Professional, polite, calm, and caring\n- Friendly, human, and respectful\n- Short and clear\n- NO technical explanations to patients\n"
+        }
+      },
+      "id": "940513b3-3901-4884-bb38-e721d1be09bf",
+      "name": "AI Agent - Appointment Assistant",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1200,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.message.chat.id }}",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Text', ``, 'string') }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegramTool",
+      "typeVersion": 1.2,
+      "position": [
+        -1680,
+        1088
+      ],
+      "id": "6d7e9c9c-917c-4652-8667-fe7a2ee740b6",
+      "name": "Sends Back Response",
+      "webhookId": "9b3fdac1-d737-480a-93ca-22e7e248e41e",
+      "credentials": {
+        "telegramApi": {
+          "id": "y12fURkqdvysxvCk",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "sonukumarpaw@gmail.com",
+          "mode": "list",
+          "cachedResultName": "sonukumarpaw@gmail.com"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "useDefaultReminders": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Use_Default_Reminders', ``, 'boolean') }}",
+        "additionalFields": {
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -1504,
+        1120
+      ],
+      "id": "12c7d93a-fdcf-43d7-82cb-2b7e65fd9efb",
+      "name": "Book Appointment",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "Ie5wEycTkZaew1iq",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "sonukumarpaw@gmail.com",
+          "mode": "list",
+          "cachedResultName": "sonukumarpaw@gmail.com"
+        },
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', ``, 'string') }}",
+        "options": {}
+      },
+      "id": "6cca0e25-d6d1-459a-8a80-4400a95e5677",
+      "name": "Fetch/Check Availability",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -1328,
+        1120
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "Ie5wEycTkZaew1iq",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "[SHEET_ID_REDACTED]",
+          "mode": "list",
+          "cachedResultName": "Patient's Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1997366779,
+          "mode": "list",
+          "cachedResultName": "Telegram Bot Patient's Details",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit#gid=1997366779"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Patient's Id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Patient_s_Id', ``, 'string') }}",
+            "Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Name', ``, 'string') }}",
+            "Age": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Age', ``, 'string') }}",
+            "Gender": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Gender', ``, 'string') }}",
+            "Contact Number": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Contact_Number', ``, 'string') }}",
+            "Email": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Email', ``, 'string') }}",
+            "What's The Isuue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('What_s_The_Isuue', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Patient's Id",
+              "displayName": "Patient's Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Age",
+              "displayName": "Age",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Gender",
+              "displayName": "Gender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Contact Number",
+              "displayName": "Contact Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "What's The Isuue",
+              "displayName": "What's The Isuue",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "useAppend": true
+        }
+      },
+      "id": "bf2af3e2-73f0-4f7c-af3f-8e28b81bd21e",
+      "name": "Add Patient Details",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -1120,
+        1136
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "OEjKFGm1cxJwt6JI",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "[SHEET_ID_REDACTED]",
+          "mode": "list",
+          "cachedResultName": "Patient's Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1550048788,
+          "mode": "list",
+          "cachedResultName": "Telegram Bot Appointment Details",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit#gid=1550048788"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Patient-Id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Patient-Id', ``, 'string') }}",
+            "Date": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Date', ``, 'string') }}",
+            "Slot Timing": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Slot_Timing', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Patient-Id",
+              "displayName": "Patient-Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Slot Timing",
+              "displayName": "Slot Timing",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "useAppend": true
+        }
+      },
+      "id": "d9bc3c58-f464-4d0c-9c99-69e0464e4d05",
+      "name": "Add Appointment Details",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -896,
+        1136
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "OEjKFGm1cxJwt6JI",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "[SHEET_ID_REDACTED]",
+          "mode": "list",
+          "cachedResultName": "Patient's Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1997366779,
+          "mode": "list",
+          "cachedResultName": "Telegram Bot Patient's Details",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit#gid=1997366779"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -688,
+        1168
+      ],
+      "id": "1021d37e-343c-4f56-821f-7a1887acfc7e",
+      "name": "Find Patient Details",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "OEjKFGm1cxJwt6JI",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "[SHEET_ID_REDACTED]",
+          "mode": "list",
+          "cachedResultName": "Patient's Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1550048788,
+          "mode": "list",
+          "cachedResultName": "Telegram Bot Appointment Details",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit#gid=1550048788"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -448,
+        1136
+      ],
+      "id": "c44f49cb-14bc-4aad-9086-72a2e3d0ef09",
+      "name": "Find Patient Appointment Details",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "OEjKFGm1cxJwt6JI",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "[SHEET_ID_REDACTED]",
+          "mode": "list",
+          "cachedResultName": "Patient's Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Patient's Details",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -336,
+        1104
+      ],
+      "id": "019686d4-6ff1-4e00-8b31-47ee2d5d6509",
+      "name": "Find The Last Patient ID",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "OEjKFGm1cxJwt6JI",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -2048,
+        1088
+      ],
+      "id": "0e9ef993-7a84-4c2a-a0a6-380021faa816",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "8s4NHMq8s4IfpqB6",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent - Appointment Assistant",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Appointment Assistant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Appointment Assistant": {
+      "main": [
+        []
+      ]
+    },
+    "Sends Back Response": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Appointment Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Book Appointment": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Appointment Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch/Check Availability": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Appointment Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Patient Details": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Appointment Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Appointment Details": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Appointment Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Patient Details": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Appointment Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Patient Appointment Details": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Appointment Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find The Last Patient ID": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Appointment Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Appointment Assistant",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "78ea06a4-a26e-4b08-9294-2149ae9a3bee",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f83e186b8a8f0ba7273bde70a51be4cd3550177f08daca8481c7be86b9c154d9"
+  },
+  "id": "AAU249n0qRXeefbD",
+  "tags": []
+}
