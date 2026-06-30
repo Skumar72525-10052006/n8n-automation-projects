@@ -1,0 +1,529 @@
+{
+  "name": "Physio Appointment Lovable",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "56bea779-83bc-4c0b-82ad-ad98d7c9e735",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -256,
+        -96
+      ],
+      "id": "e2c769d0-17ca-4ec4-a256-4d6c9a0af4ad",
+      "name": "Webhook",
+      "webhookId": "56bea779-83bc-4c0b-82ad-ad98d7c9e735"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body }}",
+        "options": {
+          "systemMessage": "=You are a smart, professional, calm, caring, and responsible AI receptionist for\nDr. Strange Physiotherapy Clinic.\n\nYou operate ONLY as a backend AI agent triggered via a WEBSITE webhook.\nYou do NOT chat with users.\nYou do NOT ask follow-up questions.\n\nYou must strictly follow tools, execution rules, and privacy constraints.\n\n================================================\nAVAILABLE TOOLS (STRICT — USE EXACT NAMES)\n================================================\n- Book Event\n- Fetch Events\n- Add Patient Details\n- Add Appointment Details\n- Fetch The Last Patient Id\n- Sends Back Email\n\n================================================\nTRIGGER RULE\n================================================\nThe workflow is triggered ONLY when:\n- A POST request is received from the website webhook\n\nThe request ALWAYS contains ALL required patient details.\n\n================================================\nINPUT PAYLOAD (ALWAYS PROVIDED)\n================================================\nThe webhook request includes:\n- Full Name\n- Age\n- Gender\n- Contact Number\n- Email\n- Health Issue\n- Preferred Appointment Date\n- Preferred Appointment Time (ANY human format)\n\n================================================\nCORE RESPONSIBILITY\n================================================\nYour job is to:\n\n1. Process the provided data\n2. Normalize date & time\n3. Check availability\n4. Automatically select the BEST available slot\n5. Book the appointment\n6. Store data in Google Sheets\n7. Send confirmation email\n8. Return a simple success response to the webhook\n\nNO user interaction.\nNO confirmations.\nNO follow-up messages.\n\n================================================\nDATE & TIME INTELLIGENCE (CRITICAL)\n================================================\nUser may send time/date in ANY format, such as:\n- \"tomorrow\"\n- \"4-4:30\"\n- \"evening\"\n- \"after lunch\"\n- \"next Monday 3 pm\"\n\nYou MUST:\n- Convert date into an exact calendar date\n- Convert time into a valid 30-minute slot\n\nFinal slot format MUST be:\n\"4:00 PM – 4:30 PM\"\n\n================================================\nAVAILABILITY & AUTO-ADJUSTMENT LOGIC\n================================================\n1. Call:\n→ Fetch Events\n\n2. Apply strict rules:\n- Working hours: 9:00 AM – 5:00 PM\n- Slot duration: 30 minutes\n- Lunch break: 1:00 PM – 2:00 PM\n- No Saturday or Sunday bookings\n\n3. If the requested slot is AVAILABLE:\n- Book it\n\n4. If the requested slot is NOT available:\n- Automatically find the NEAREST available slot\n- This may be:\n  • Later the same day\n  • Or the next working day\n- DO NOT ask the user\n- DO NOT reject the booking\n\n================================================\nPATIENT ID GENERATION (MANDATORY)\n================================================\nBefore storing any data:\n\n1. Generate Patient ID using:\n→ Fetch The Last Patient Id\n\nFormat:\nPAT-YYYYMMDD-XXX\n\nRules:\n- YYYYMMDD = BOOKING DATE (today)\n- XXX starts from 001 daily\n- Increment safely\n- Reset when booking date changes\n\n================================================\nBOOKING & DATA STORAGE (STRICT ORDER)\n================================================\nAfter final slot selection:\n\n1. Book calendar event:\n→ Book Event\n\n2. Store patient master data:\n→ Add Patient Details\nColumns:\nPatient-ID, Name, Age, Gender, Contact Number, Email, Issue\n\n3. Store appointment data:\n→ Add Appointment Details\nColumns:\nPatient-ID, Appointment Date, Appointment Slot\n\n================================================\nEMAIL CONFIRMATION (MANDATORY)\n================================================\nAfter successful booking:\n\nSend confirmation using:\n→ Sends Back Email\n\nEmail MUST include:\n- Patient Name\n- Patient ID\n- Appointment Date\n- Appointment Slot\n- Clinic Name\n- Receptionist Contact Number\n- Receptionist Email ID\n- Polite, genuine closing\n\nReceptioinst Contact Number :- [PHONE_REDACTED]\nReceptionist Email :- sonukumarpaw@gmail.com\n\nTone:\n- Professional\n- Caring\n- Trustworthy\n- Human\n\n================================================\nWEBHOOK RESPONSE (FINAL STEP)\n================================================\nReturn ONLY a simple confirmation response:\n\nExample:\n{\n  \"status\": \"success\",\n  \"message\": \"Your appointment has been booked successfully.\"\n}\n\nDO NOT include explanations.\nDO NOT include internal logic.\nDO NOT include alternatives.\n\n================================================\nPRIVACY & SAFETY (NON-NEGOTIABLE)\n================================================\n- Never expose other patient data\n- Never expose raw calendar events\n- Never store partial or failed bookings\n- All actions must be atomic and safe\n\n================================================\nTIME CONTEXT\n================================================\nCurrent system time: {{ $now }}\n\n================================================\nSYSTEM BEHAVIOR\n================================================\n- Fully automated\n- Deterministic\n- Silent execution\n- Production-grade backend agent\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -32,
+        -96
+      ],
+      "id": "40c8787b-83a3-45c7-b8a4-18b84f5df5b6",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -480,
+        128
+      ],
+      "id": "9be650ed-64d1-4ccf-a834-d2bebbddbeba",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "hUUinpi7MOgPQMDa",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -320,
+        144
+      ],
+      "id": "adf4ac68-e6b1-44f6-bd23-d03bdc86e62d",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "sonukumarpaw@gmail.com",
+          "mode": "list",
+          "cachedResultName": "sonukumarpaw@gmail.com"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "useDefaultReminders": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Use_Default_Reminders', ``, 'boolean') }}",
+        "additionalFields": {
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', ``, 'string') }}",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -160,
+        160
+      ],
+      "id": "a2543e3f-9228-44d5-a8c2-96baae81b2eb",
+      "name": "Book Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "klktoUkVmZLb2c5W",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "sonukumarpaw@gmail.com",
+          "mode": "list",
+          "cachedResultName": "sonukumarpaw@gmail.com"
+        },
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        144
+      ],
+      "id": "80644e7d-ce04-4699-ad80-b248cdb8a5d5",
+      "name": "Fetch Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "klktoUkVmZLb2c5W",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "[SHEET_ID_REDACTED]",
+          "mode": "list",
+          "cachedResultName": "Patient's Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Patient's Details",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Patient's Id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Patient_s_Id', ``, 'string') }}",
+            "Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Name', ``, 'string') }}",
+            "Age": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Age', ``, 'string') }}",
+            "Gender": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Gender', ``, 'string') }}",
+            "Contact Number": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Contact_Number', ``, 'string') }}",
+            "Email": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Email', ``, 'string') }}",
+            "What's The Isuue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('What_s_The_Isuue', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Patient's Id",
+              "displayName": "Patient's Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Age",
+              "displayName": "Age",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Gender",
+              "displayName": "Gender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact Number",
+              "displayName": "Contact Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "What's The Isuue",
+              "displayName": "What's The Isuue",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "useAppend": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Minimise_API_Calls', ``, 'boolean') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        176,
+        144
+      ],
+      "id": "93001ba4-1260-4b19-8828-5a4ac7830d86",
+      "name": "Add Patient Details",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wsEp4xXXVENRLA9R",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "[SHEET_ID_REDACTED]",
+          "mode": "list",
+          "cachedResultName": "Patient's Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1100011365,
+          "mode": "list",
+          "cachedResultName": "Appointment Details",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit#gid=1100011365"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Patient-Id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Patient-Id', ``, 'string') }}",
+            "Date": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Date', ``, 'string') }}",
+            "Slot Timing": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Slot_Timing', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Patient-Id",
+              "displayName": "Patient-Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Slot Timing",
+              "displayName": "Slot Timing",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "useAppend": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Minimise_API_Calls', ``, 'boolean') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        320,
+        160
+      ],
+      "id": "bf012cd1-7786-40eb-9db8-9db775802df2",
+      "name": "Add Appointment Details",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wsEp4xXXVENRLA9R",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "[SHEET_ID_REDACTED]",
+          "mode": "list",
+          "cachedResultName": "Patient's Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Patient's Details",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        528,
+        176
+      ],
+      "id": "77269773-c8d1-4e32-9f7f-99e7b81d81d9",
+      "name": "Fetch The Last Patient ID",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wsEp4xXXVENRLA9R",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "emailType": "text",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        192
+      ],
+      "id": "b9d89682-bd33-42ec-a23b-cc15fb634473",
+      "name": "Sends Back Email",
+      "webhookId": "91577c58-4eb8-41e4-a596-c9416e5682fc",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Icz4p1xrAqQzjuML",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        304,
+        -96
+      ],
+      "id": "76f03bd8-0a68-4f5a-80b8-249c11ec8b91",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Book Event": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Patient Details": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Appointment Details": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch The Last Patient ID": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sends Back Email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "5b261f0d-ae3a-4a93-a707-4aa40fa82125",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "26ff4430a34f1821d0f12483dd5f0dbdfe662dd60fefffc305eb16d1183f8f7d"
+  },
+  "id": "hoZEGTYJQnxK1skNRI9M2",
+  "tags": []
+}
