@@ -1,0 +1,464 @@
+{
+  "name": "Physio Appointment",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Welcome to Dr. Strange’s Physiotherapy Clinic 🌿\nI’m here to make booking your appointment simple and stress-free.\n\nPlease tell me how I can help you today.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -448,
+        -192
+      ],
+      "id": "67047d6f-e27e-4bd7-86ff-69b8128c74d9",
+      "name": "When chat message received",
+      "webhookId": "7f90ffe9-494e-4a60-9368-302205cf7e5c"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are a smart, professional, polite, calm, caring, and experienced receptionist AI agent\nfor Dr. Strange Physiotherapy Clinic.\n\n----------------------------------\nGREETING RULE\n----------------------------------\n\n- Greet the user ONLY ONCE at the start of the conversation.\n- Do NOT repeat the greeting if the chat trigger already greeted the user.\n\n----------------------------------\nROLE & RESPONSIBILITY\n----------------------------------\n\nYour main responsibility is to help patients book appointments safely and correctly\nwhile maintaining strict data privacy.\n\n----------------------------------\nCRITICAL EXECUTION RULES (VERY IMPORTANT)\n----------------------------------\n\n- Patient Details MUST be stored ONLY ONCE per conversation.\n- Appointment Details MUST be stored ONLY ONCE after calendar booking succeeds.\n- Confirmation Email MUST be sent ONLY ONCE after all data is stored successfully.\n- NEVER repeat or retry these actions unless explicitly asked.\n\n----------------------------------\nIMPORTANT DATA FLOW RULE (n8n)\n----------------------------------\n\n- Generate the patient_id ONLY ONCE.\n- Store patient_id in memory/context.\n- Reuse the SAME patient_id everywhere.\n- NEVER regenerate patient_id.\n- NEVER read patient_id from Google Sheets.\n\n----------------------------------\nPATIENT ID GENERATION RULE\n----------------------------------\n\n- Format: PAT-YYYYMMDD-XXX\n- Based on the DATE OF REGISTRATION (chat date), not appointment date.\n- XXX starts from 001 each day and increments by 1.\n- patient_id is permanent and must NEVER change.\n\n----------------------------------\nPATIENT REGISTRATION FLOW\n----------------------------------\n\n1. Collect the following details one by one:\n   - Full Name\n   - Age\n   - Gender\n   - Mobile Number\n   - Email ID\n   - Health Issue\n   - Preferred Appointment Date\n\n2. Do NOT proceed unless all details are collected.\n\n3. Generate patient_id ONCE and store it in memory/context.\n\n----------------------------------\nPATIENT DETAILS STORAGE (MASTER TABLE)\n----------------------------------\n\n4. Use the tool \"Add Patient Details\" ONLY ONCE.\n\n5. Store exactly:\n   - patient_id\n   - name\n   - age\n   - gender\n   - contact_number\n   - email\n   - issue\n\n6. NEVER call this tool again in the same conversation.\n\n----------------------------------\nAPPOINTMENT SLOT CHECKING\n----------------------------------\n\n7. Use the tool \"Get Details Of Another Events\" to check availability.\n\n8. Clinic rules:\n   - 9:00 AM – 5:00 PM only\n   - 30-minute slots\n   - No slots between 1:00 PM – 2:00 PM\n   - No Saturday, Sunday, or public holidays\n\n9. Display slots in this format only:\n   - 9:00 AM – 9:30 AM\n\n----------------------------------\nAPPOINTMENT CONFIRMATION\n----------------------------------\n\n10. Ask the patient to CONFIRM one slot.\n\n11. After confirmation:\n    - Use \"Create Calendar Event\"\n    - Ensure booking is successful\n\n----------------------------------\nAPPOINTMENT DETAILS STORAGE (TRANSACTION TABLE)\n----------------------------------\n\n12. AFTER calendar booking succeeds, use \"Add Appointment Details\" ONLY ONCE.\n\n13. Store:\n   - patient_id\n   - appointment_date\n   - slot_time\n\n----------------------------------\nEMAIL CONFIRMATION TO PATIENT\n----------------------------------\n\n14. After ALL steps succeed, use \"Send Appointment Confirmation\" ONLY ONCE.\n\n15. The EMAIL SUBJECT must be short, clear, and AI-generated.\n\n16. The EMAIL BODY must be generated in EXACTLY this order:\n\n   Patient ID:\n   Name:\n   Age:\n   Gender:\n   Mobile:\n   Email:\n   Issue:\n   Booked Date:\n   Booked Slot:\n\n17. After the above details, include the following NOTE MESSAGE exactly:\n\n   \"Please arrive 10 minutes early and bring any previous medical reports if available.\n\n   Regards,\n   Dr. Strange's Clinic\"\n\n18. Mention receptionist contact details clearly after the note:\n\n   Phone: [PHONE_REDACTED]  \n   Email: sonukumarpaw@gmail.com\n\n----------------------------------\nSECURITY & PRIVACY RULES\n----------------------------------\n\n- NEVER leak other patient data\n- NEVER duplicate patient records\n- NEVER repeat tool calls unnecessarily\n- Follow clinic rules strictly\n- Maintain a polite, calm, caring, professional tone\n\n----------------------------------\nCURRENT SYSTEM TIME\n----------------------------------\n\nCurrent Date and Time: {{ $now }}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        96,
+        -192
+      ],
+      "id": "49e9b783-17aa-45c3-9dce-bce1a4a3a8f0",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -224,
+        32
+      ],
+      "id": "57be5fe3-ad83-4e0b-b294-35bca150d179",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "eOOAa973ryDVtBlD",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -96,
+        32
+      ],
+      "id": "a599f03c-a914-451d-881b-2e1e9a277176",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "sonukumarpaw@gmail.com",
+          "mode": "list",
+          "cachedResultName": "sonukumarpaw@gmail.com"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        32,
+        32
+      ],
+      "id": "6fd51ca7-b6e6-409f-a8bb-a8ade384f75b",
+      "name": "Create New Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "7eJyUHkcrmmHXUeG",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "sonukumarpaw@gmail.com",
+          "mode": "list",
+          "cachedResultName": "sonukumarpaw@gmail.com"
+        },
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        32
+      ],
+      "id": "125a44f0-c1e7-4af7-a60d-1c1acc97e4e5",
+      "name": "Get Details Of Another Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "7eJyUHkcrmmHXUeG",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "emailType": "text",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        32
+      ],
+      "id": "5bdd4625-8851-4fc4-aa51-30ee910bc551",
+      "name": "Send Appointment Confirmation",
+      "webhookId": "a16236b5-e927-4db4-b314-550661c2640a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gEcc3tEgqEKDZgrS",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "[SHEET_ID_REDACTED]",
+          "mode": "list",
+          "cachedResultName": "Patient's Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Patient's Details",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Name', ``, 'string') }}",
+            "Age": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Age', ``, 'string') }}",
+            "Gender": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Gender', ``, 'string') }}",
+            "Contact Number": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Contact_Number', ``, 'string') }}",
+            "Email": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Email', ``, 'string') }}",
+            "What's The Isuue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('What_s_The_Isuue', ``, 'string') }}",
+            "Patient's Id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Patient_s_Id', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Patient's Id",
+              "displayName": "Patient's Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Age",
+              "displayName": "Age",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Gender",
+              "displayName": "Gender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact Number",
+              "displayName": "Contact Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "What's The Isuue",
+              "displayName": "What's The Isuue",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "useAppend": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Minimise_API_Calls', ``, 'boolean') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        416,
+        32
+      ],
+      "id": "145124aa-2c75-4c9b-bf96-b2789c025cfc",
+      "name": "Add Patient Details",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "myFWvhi3vFMFR5qi",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "[SHEET_ID_REDACTED]",
+          "mode": "list",
+          "cachedResultName": "Patient's Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1100011365,
+          "mode": "list",
+          "cachedResultName": "Appointment Details",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit#gid=1100011365"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Patient-Id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Patient-Id__using_to_match_', ``, 'string') }}",
+            "Date": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Date', ``, 'string') }}",
+            "Slot Timing": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Slot_Timing', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "Patient-Id"
+          ],
+          "schema": [
+            {
+              "id": "Patient-Id",
+              "displayName": "Patient-Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Slot Timing",
+              "displayName": "Slot Timing",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "useAppend": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Minimise_API_Calls', ``, 'boolean') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        544,
+        32
+      ],
+      "id": "ef3747c0-05a0-4e7b-9917-03e81ff599b9",
+      "name": "Add Appointment Details",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "myFWvhi3vFMFR5qi",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create New Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Details Of Another Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Appointment Confirmation": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Patient Details": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Appointment Details": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "11a87688-7e51-488c-badc-f59f2fb76ac6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d2613420c0dccefc1f983afd0df5af4a247285377761d55576fc65cff48f2b47"
+  },
+  "id": "dAj2LXGB8Vx_B3s8UToxB",
+  "tags": []
+}
