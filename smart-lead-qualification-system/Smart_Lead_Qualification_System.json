@@ -1,0 +1,526 @@
+{
+  "name": "Smart Lead Qualification System",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "cd484d4a-8b09-47f8-b1c5-34f1f0768b09",
+      "name": "Add Timestamp",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1136,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Code in JavaScript').item.json.Email }}",
+        "subject": "Thank You for Your Inquiry",
+        "emailType": "text",
+        "message": "=Hi {{ $('Code in JavaScript').item.json['Full Name'] }},\n\nThank you for your interest in {{ $('Code in JavaScript').item.json['Product Interest'] }}.\n\nWe have received your inquiry and our sales team will contact you shortly to discuss your requirements.\n\nBest regards,\nSales Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "a7f0f725-bdaf-4b91-b7f8-3e586de8f2f6",
+      "name": "Send Confirmation Email - HOT",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "196dea16-26f9-4aed-8f54-18e3254fa91c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gEcc3tEgqEKDZgrS",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "Thank You for Your Inquiry",
+        "emailType": "text",
+        "message": "=Hi {{ $json.Name }},\n\nThank you for your interest in {{ $json.Product }} .\n\nWe have received your inquiry and will get back to you soon with more information.\n\nBest regards,\nSales Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "5a6e2532-6fb9-4c74-a371-0a3337207ed1",
+      "name": "Send Confirmation Email - WARM",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        384
+      ],
+      "webhookId": "1717b770-fa5b-4925-9d32-847280be911d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gEcc3tEgqEKDZgrS",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Append row in sheet').item.json.Email }}",
+        "subject": "Thank You for Your Interest",
+        "emailType": "text",
+        "message": "=Hi {{ $('Code in JavaScript').item.json['Full Name'] }},\n\nThank you for your interest in {{ $('Code in JavaScript').item.json['Product Interest'] }}.\n\nWe will keep you updated on our latest offerings and developments.\n\nBest regards,\nSales Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "64e558aa-c3ce-47cc-8039-3fe5ced7bbdf",
+      "name": "Send Confirmation Email - COLD",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        576
+      ],
+      "webhookId": "57b7adee-cb1b-4d0b-8cbb-7ca5c54e3a32",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gEcc3tEgqEKDZgrS",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "sonukumarpaw@gmail.com",
+        "subject": "=🔥 HOT LEAD ALERT: {{ $('Code in JavaScript').item.json['Company Name'] }}",
+        "emailType": "text",
+        "message": "=URGENT: New HOT Lead Received!\n\nLead Details:\n- Name: {{ $('Code in JavaScript').item.json['Full Name'] }}\n- Email: {{ $('Code in JavaScript').item.json.Email }}\n- Company: {{ $('Code in JavaScript').item.json['Company Name'] }}\n- Product Interest: {{ $('Code in JavaScript').item.json['Product Interest'] }}\n- Budget: {{ $('Code in JavaScript').item.json['Budget Range'] }}\n- Urgency: {{ $('Code in JavaScript').item.json.Urgency }}\n- Lead Type: {{ $('Code in JavaScript').item.json.leadType }}\n- Timestamp: {{ $('Code in JavaScript').item.json.timestamp }}\n\nAction Required: Contact this lead immediately!\n\nSales Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "aea76958-3d9b-49aa-86af-869bdf332f9a",
+      "name": "Admin Alert - HOT Lead",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        192
+      ],
+      "webhookId": "2fabfcd0-eefa-42d3-8c88-a3c04370a8d0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gEcc3tEgqEKDZgrS",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "[SHEET_ID_REDACTED]",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/[SHEET_ID_REDACTED]/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json['Full Name'] }}",
+            "Company": "={{ $json['Company Name'] }}",
+            "Email": "={{ $json.Email }}",
+            "Product": "={{ $json['Product Interest'] }}",
+            "Urgency": "={{ $json.Urgency }}",
+            "Budget": "={{ $json['Budget Range'] }}",
+            "Timestamp": "={{ $json.timestamp }}",
+            "LeadType": "={{ $json.leadType }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Budget",
+              "displayName": "Budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LeadType",
+              "displayName": "LeadType",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "useAppend": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -640,
+        384
+      ],
+      "id": "c52318b6-480a-4127-9d1a-bd0adde930a1",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "myFWvhi3vFMFR5qi",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Product Enquiry Form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name",
+              "placeholder": "Rahul Sah",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Company Name",
+              "placeholder": "Sustech Engineering",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Product Interest",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Budget Range",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Low"
+                  },
+                  {
+                    "option": "Medium"
+                  },
+                  {
+                    "option": "High"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Urgency",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Exploring"
+                  },
+                  {
+                    "option": "1 Week"
+                  },
+                  {
+                    "option": "Immediate"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Your response has been recorded. We Will Get Back To You Shortly According To Your Demand Of Product."
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -1312,
+        384
+      ],
+      "id": "66a3a4d2-e96a-4468-b9e0-fe82f7add958",
+      "name": "On form submission",
+      "webhookId": "2f63619d-ab06-4dcd-ae14-419917120d34"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\n\n// Read fields WITH SPACES using bracket notation\nconst budget = (item.json[\"Budget Range\"] || \"\").trim();\nconst urgency = (item.json[\"Urgency\"] || \"\").trim();\n\nlet leadType = \"COLD\";\n\nif (\n  (budget === \"High\" && urgency === \"Immediate\") ||\n  (budget === \"Medium\" && urgency === \"Immediate\")\n) {\n  leadType = \"HOT\";\n} else if (budget === \"Medium\") {\n  leadType = \"WARM\";\n}\n\nitem.json.leadType = leadType;\n\nreturn [{ json: item.json }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -928,
+        384
+      ],
+      "id": "3d2297b6-9e8c-4701-a902-65c823a244ac",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.LeadType }}",
+                    "rightValue": "HOT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "268d8aff-2003-4956-826a-7f52b190b11d"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a219e0a0-63dd-4640-bdb3-00d636966280",
+                    "leftValue": "={{ $json.LeadType }}",
+                    "rightValue": "WARM",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "26503c13-685d-4f19-806e-04c85f00e83a",
+                    "leftValue": "={{ $json.LeadType }}",
+                    "rightValue": "COLD",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -432,
+        368
+      ],
+      "id": "296dc9b4-4889-4349-bbf1-05cea465172d",
+      "name": "Switch"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Add Timestamp": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Add Timestamp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation Email - HOT",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Admin Alert - HOT Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Confirmation Email - WARM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Confirmation Email - COLD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "abd11e19-3742-4f72-919d-3148e369a358",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d2613420c0dccefc1f983afd0df5af4a247285377761d55576fc65cff48f2b47"
+  },
+  "id": "5KO3qdL2HQJvjvGC6FWCp",
+  "tags": []
+}
